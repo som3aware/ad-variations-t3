@@ -1,7 +1,7 @@
 // pages/index.tsx
 import { Inter } from "next/font/google";
 import Head from "next/head";
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { api } from "@/utils/api";
 import { env } from "@/env.mjs";
 
@@ -149,8 +149,8 @@ export default function Home() {
               className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 focus:outline-none"
               id="image"
               type="file"
-              onChange={(e: any) =>
-                setImageFile(e.target.files ? e.target.files[0] : null)
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setImageFile(e.target.files ? e.target.files[0] as File : null)
               }
             />
           </div>
