@@ -21,7 +21,7 @@ export default function Home() {
     variations: string;
   } | null>(null);
 
-  const handlePlatformChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePlatformChange = (e: ChangeEvent<HTMLInputElement>) => {
     const platform = e.target.value;
     if (selectedPlatforms.includes(platform)) {
       setSelectedPlatforms(
@@ -45,19 +45,19 @@ export default function Home() {
     try {
       setDisabled(true);
       const formData = new FormData(e.currentTarget);
-      const { data } = await uploadImage(imageFile as File);
-      console.log(data);
+      const url = await uploadImage(imageFile!);
+
       mutate({
         brief: formData.get("brief") as string,
         platforms: formData.getAll("platforms").join(","),
-        image: data.url,
+        image: url,
       });
     } catch (error) {
       console.log(error);
     }
   };
 
-  const uploadImage = async (image: File) => {
+  const uploadImage = async (image: File): Promise<string> => {
     const url = `https://api.imgbb.com/1/upload`;
     const formData = new FormData();
     formData.append("key", env.NEXT_PUBLIC_IMGBB_KEY);
@@ -65,7 +65,12 @@ export default function Home() {
     formData.append("image", image);
 
     const req = await fetch(url, { method: "POST", body: formData });
-    return await req.json();
+    const res = (await req.json()) as {
+      data: { id: string; url: string };
+      success: boolean;
+      status: number;
+    };
+    return res.data.url;
   };
 
   return (
@@ -150,7 +155,9 @@ export default function Home() {
               id="image"
               type="file"
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setImageFile(e.target.files ? e.target.files[0] as File : null)
+                setImageFile(
+                  e.target.files ? e.target.files[0]! : null
+                )
               }
             />
           </div>
@@ -167,9 +174,7 @@ export default function Home() {
 
       <div className="h-full w-1/2 rounded-lg bg-white p-4 shadow-lg">
         <h1 className="mb-4 text-3xl font-semibold">Result</h1>
-        {form && (
-          <p>{JSON.stringify(form, null,)}</p>
-        )}
+        {form && <p>{JSON.stringify(form, null)}</p>}
       </div>
     </div>
   );
