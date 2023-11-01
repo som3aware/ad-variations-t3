@@ -1,7 +1,7 @@
 // pages/index.tsx
 import { Inter } from "next/font/google";
 import Head from "next/head";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import { api } from "@/utils/api";
 import { env } from "@/env.mjs";
 
@@ -40,7 +40,7 @@ export default function Home() {
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       setDisabled(true);
@@ -168,7 +168,7 @@ export default function Home() {
       <div className="h-full w-1/2 rounded-lg bg-white p-4 shadow-lg">
         <h1 className="mb-4 text-3xl font-semibold">Result</h1>
         {form && (
-          <p>{JSON.stringify(form, null, 2)}</p>
+          <p>{JSON.stringify(form, null,)}</p>
         )}
       </div>
     </div>
