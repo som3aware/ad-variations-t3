@@ -1,12 +1,9 @@
-
-
 // pages/index.tsx
 import { Inter } from "next/font/google";
 import Head from "next/head";
 import { useState } from "react";
 import { api } from "@/utils/api";
 import { env } from "@/env.mjs";
-
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,26 +35,25 @@ export default function Home() {
   const { mutate } = api.post.generateAdVariant.useMutation({
     onSuccess: (data) => {
       console.log(data);
-      setDisabled(false)
-      setForm(data)
+      setDisabled(false);
+      setForm(data);
     },
   });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      setDisabled(true)
+      setDisabled(true);
       const formData = new FormData(e.currentTarget);
       const { data } = await uploadImage(imageFile as File);
-      console.log(data)
+      console.log(data);
       mutate({
-        brief: formData.get('brief') as string,
-        platforms: formData.getAll('platforms').join(","),
-        image: data.url
-      })
-
+        brief: formData.get("brief") as string,
+        platforms: formData.getAll("platforms").join(","),
+        image: data.url,
+      });
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
