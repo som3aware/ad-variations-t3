@@ -168,12 +168,7 @@ export default function Home() {
       <div className="h-full w-1/2 rounded-lg bg-white p-4 shadow-lg">
         <h1 className="mb-4 text-3xl font-semibold">Result</h1>
         {form && (
-          <>
-            <img src={form.img1x1}></img>
-            <br />
-            <img src={form.img9x16}></img>
-            <p>{form.variations}</p>
-          </>
+          <p>{JSON.stringify(form, null, 2)}</p>
         )}
       </div>
     </div>
