@@ -193,13 +193,13 @@ export default function Home() {
                 </GridItem>
               </Grid>
               <ul>
-                {form.variations.map((variant) => 
-                  (<div>
+                {form.variations.map((variant, index) =>
+                (<div key={index}>
                   <h2>Copy: {variant.copy}</h2>
                   <h3>CTA: {variant.cta}</h3>
                   <p>Target Audience: {variant.target_audience}</p>
                   <p>Target Platform: {variant.target_platform}</p>
-                  </div>
+                </div>
                 ))}
               </ul>
             </Flex>
