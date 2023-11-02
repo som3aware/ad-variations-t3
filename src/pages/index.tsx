@@ -1,9 +1,12 @@
 // pages/index.tsx
-import { Inter } from "next/font/google";
 import Head from "next/head";
-import { ChangeEvent, FormEvent, useState } from "react";
 import { api } from "@/utils/api";
-import { env } from "@/env.mjs";
+import { storage } from "@/firebase";
+import { Inter } from "next/font/google";
+import { Button, Container, Flex, Grid, GridItem } from "@chakra-ui/react";
+import { ChangeEvent, FormEvent, useState } from "react";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,7 +21,7 @@ export default function Home() {
   const [form, setForm] = useState<{
     img1x1: string;
     img9x16: string;
-    variations: string;
+    variations: { target_platform: string, target_audience: string, cta: string, copy: string }[];
   } | null>(null);
 
   const handlePlatformChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -34,11 +37,23 @@ export default function Home() {
 
   const { mutate } = api.post.generateAdVariant.useMutation({
     onSuccess: (data) => {
+      resetForm()
       console.log(data);
       setDisabled(false);
       setForm(data);
     },
+    onError: (error) => {
+      resetForm()
+      setDisabled(false)
+      console.log(error)
+    }
   });
+
+  const resetForm = () => {
+    setBrief("")
+    setImageFile(null)
+    setSelectedPlatforms([])
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,31 +61,21 @@ export default function Home() {
       setDisabled(true);
       const formData = new FormData(e.currentTarget);
       const url = await uploadImage(imageFile!);
-
+      console.log({ url })
       mutate({
         brief: formData.get("brief") as string,
-        platforms: formData.getAll("platforms").join(","),
-        image: url,
+        platforms: formData.getAll("socialMedia").join(","),
+        image: { url, name: imageFile!.name, type: imageFile!.type },
       });
     } catch (error) {
-      console.log(error);
+      setDisabled(false)
     }
   };
 
   const uploadImage = async (image: File): Promise<string> => {
-    const url = `https://api.imgbb.com/1/upload`;
-    const formData = new FormData();
-    formData.append("key", env.NEXT_PUBLIC_IMGBB_KEY);
-    formData.append("name", image.name);
-    formData.append("image", image);
-
-    const req = await fetch(url, { method: "POST", body: formData });
-    const res = (await req.json()) as {
-      data: { id: string; url: string };
-      success: boolean;
-      status: number;
-    };
-    return res.data.url;
+    const imageRef = ref(storage, `images/original-${image.name}`);
+    const snapshot = await uploadBytes(imageRef, image)
+    return await getDownloadURL(snapshot.ref)
   };
 
   return (
@@ -80,8 +85,9 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="h-full w-1/2 rounded-lg bg-white p-4 shadow-lg">
+      <div className="h-screen w-1/2 rounded-lg bg-white p-4 bg-white">
         <h1 className="mb-4 text-3xl font-semibold">Ad Variants Generator</h1>
+        {/* <img src="1x1-football.jpeghttps://firebasestorage.googleapis.com/v0/b/ad-variations.appspot.com/o/images%2F1x1-football.jpeg?alt=media&token=8ba58e37-762e-4feb-81c2-40c6120e4c59&_gl=1*z7kap8*_ga*MTU2NDI1NjE5LjE2OTg4NTM1NDU.*_ga_CW55HF8NVT*MTY5ODkzMzM1Mi4zLjEuMTY5ODkzMzkzOS42MC4wLjA."></img> */}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label
@@ -154,6 +160,7 @@ export default function Home() {
               className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 focus:outline-none"
               id="image"
               type="file"
+              accept="image/*,video/*"
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setImageFile(
                   e.target.files ? e.target.files[0]! : null
@@ -162,19 +169,42 @@ export default function Home() {
             />
           </div>
 
-          <button
-            disabled={disabled}
-            className="focus:shadow-outline rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 focus:outline-none"
+          <Button
             type="submit"
+            colorScheme="blue"
+            isLoading={disabled}
           >
             Generate Ad
-          </button>
+          </Button>
         </form>
       </div>
 
-      <div className="h-full w-1/2 rounded-lg bg-white p-4 shadow-lg">
-        <h1 className="mb-4 text-3xl font-semibold">Result</h1>
-        {form && <p>{JSON.stringify(form, null)}</p>}
+      <div className="h-screen w-1/2 rounded-lg bg-white p-4 bg-gray-50">
+        <h1 className="mb-4 text-3xl font-semibold">Variants</h1>
+        {form &&
+          <Container>
+            <Flex flexDirection="column">
+              <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                <GridItem colSpan={1}>
+                  <img src={form.img1x1} width={200} height={200} alt="original image in aspect ratio 1:1"></img>
+                </GridItem>
+                <GridItem colSpan={1}>
+                  <img src={form.img9x16} width={200} height={200} alt="original image in aspect ratio 9:16"></img>
+                </GridItem>
+              </Grid>
+              <ul>
+                {form.variations.map((variant) => 
+                  (<div>
+                  <h2>Copy: {variant.copy}</h2>
+                  <h3>CTA: {variant.cta}</h3>
+                  <p>Target Audience: {variant.target_audience}</p>
+                  <p>Target Platform: {variant.target_platform}</p>
+                  </div>
+                ))}
+              </ul>
+            </Flex>
+          </Container>
+        }
       </div>
     </div>
   );
